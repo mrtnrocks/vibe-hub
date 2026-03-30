@@ -21,20 +21,17 @@ export async function syncCatalog(): Promise<CatalogApp[]> {
     clearTimeout(timer)
 
     if (!response.ok) {
-      console.log(`[catalog-sync] Remote returned ${response.status}, using bundled fallback`)
       return loadBundledCatalog()
     }
 
     const data = await response.json()
     if (!Array.isArray(data)) {
-      console.log('[catalog-sync] Remote data is not an array, using bundled fallback')
       return loadBundledCatalog()
     }
 
     return data as CatalogApp[]
-  } catch (err) {
+  } catch {
     clearTimeout(timer)
-    console.log('[catalog-sync] Fetch failed, using bundled fallback:', err)
     return loadBundledCatalog()
   }
 }

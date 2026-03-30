@@ -20,7 +20,6 @@ export function initUpdater(win: BrowserWindow): void {
 
   // Skip auto-update for Store installs
   if (process.windowsStore) {
-    console.log('[updater] Microsoft Store install detected — skipping auto-updater')
     return
   }
 

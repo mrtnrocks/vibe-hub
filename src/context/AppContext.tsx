@@ -80,8 +80,13 @@ export function AppProvider({ children }: { children: React.ReactNode }): React.
       ipc.prefsGet('sidebarOrder')
     ])
 
-    const entries: AppEntry[] = []
+    // Build a set of custom app IDs so we can mark them correctly
+    const customIds = new Set<string>(
+      customResult.ok ? (customResult.data as CustomApp[]).map((a) => a.id) : []
+    )
 
+    // The catalog response already includes custom apps — don't add them again
+    const entries: AppEntry[] = []
     if (catalogResult.ok) {
       for (const app of catalogResult.data as CatalogApp[]) {
         entries.push({
@@ -89,19 +94,7 @@ export function AppProvider({ children }: { children: React.ReactNode }): React.
           name: app.name,
           icon: app.icon,
           url: app.cleanUrl,
-          isCustom: false
-        })
-      }
-    }
-
-    if (customResult.ok) {
-      for (const app of customResult.data as CustomApp[]) {
-        entries.push({
-          id: app.id,
-          name: app.name,
-          icon: app.icon,
-          url: app.url,
-          isCustom: true
+          isCustom: customIds.has(app.id)
         })
       }
     }

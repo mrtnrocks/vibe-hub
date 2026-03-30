@@ -31,18 +31,22 @@ function attachViewListeners(appId: string, view: WebContentsView, win: BrowserW
   })
 
   view.webContents.on('render-process-gone', (_event, details) => {
-    console.log(`[view-manager] render-process-gone for ${appId}:`, details.reason)
     const managed = views.get(appId)
     if (!managed) return
 
     managed.crashCount += 1
     managed.view = null
 
-    // Remove from window
+    // Remove from window and close the crashed webContents to free resources
     try {
       win.contentView.removeChildView(view)
     } catch {
       // already removed
+    }
+    try {
+      view.webContents.close()
+    } catch {
+      // webContents may already be in a bad state
     }
 
     sendToRenderer(win, IPC_VIEW_STATE_CHANGED, { appId, state: 'crashed' })
@@ -113,6 +117,7 @@ export function switchToApp(
     views.set(appId, managed)
   } else {
     managed.lastActive = Date.now()
+    managed.url = url
     managed.keepAlive = keepAlive
     managed.affiliateSessionsRemaining = affiliateSessionsRemaining
   }

@@ -230,4 +230,66 @@
   assets before Store submission  
 
 
-## Phase 10: Integration Testing & Bug Fixing ⬜
+## Phase 10: Integration Testing & Bug Fixing ✅
+
+### Test flows verified (code review + static analysis)
+
+- [x] **Flow 1 — First launch → onboarding → hotkey → directory → pin → switch**
+  - Onboarding overlay: defaults to `onboardingComplete=true` to suppress flash, set to `false` after pref loads on first install
+  - `HotkeyRecorder` captures modifier+key combos, `ipc.shortcutsSetGlobal` called on Get Started
+  - Directory: search + tag filter, AppCard pin/unpin calls IPC then `loadApps()` to sync sidebar order
+  - `switchApp` persists `lastActiveAppId`, calls `ipc.appSwitch`, receives `view:state-changed → active`
+
+- [x] **Flow 2 — Sleep/wake: sleeping state, click to wake, login state preserved**
+  - `sleep-manager` checks every 30s; destroys views where `now − lastActive > threshold && !keepAlive`
+  - `destroyView` calls `webContents.close()` and sends `sleeping` state to renderer
+  - AppIcon shows moon indicator when `viewState === 'sleeping'`
+  - On wake: `switchToApp` creates new `WebContentsView` with same `persist:${appId}` session partition — cookies/storage survive
+
+- [x] **Flow 3 — Crash recovery: placeholder shows, reload works**
+  - `render-process-gone` listener: increments `crashCount`, sets `view = null`, removes from contentView
+  - Renderer receives `crashed` state → shows `CrashPlaceholder`
+  - `reloadApp` clears viewState entry, calls `ipc.appSwitch` → new view created → `active` state sent
+  - After 3 crashes: toast warning shown
+
+- [x] **Flow 4 — Prompt lifecycle: create → fill variables → copy → edit → delete**
+  - `parseVariables` extracts unique `{{var}}` names; `interpolate` replaces values, leaves unmatched as-is
+  - `PromptForm` keeps defaults in sync with template via `useEffect`; `VariableFiller` shows live preview + clipboard copy
+  - `usePrompts` does optimistic cache updates on create/update/delete
+
+- [x] **Flow 5 — Custom app: add URL → validate → appears in directory → pin → loads**
+  - URL validation: prepend `https://` if missing, `new URL()` constructor check in both renderer and main
+  - `app:get-catalog` merges custom apps into catalog response; `useApps` marks them `isCustom: true`
+  - After add: `load()` + `reloadContext()` refresh both the directory list and sidebar
+
+- [x] **Flow 6 — Affiliate: 3 opens × 30s → URL rotates to clean**
+  - `upsertAppSession` starts with 3 sessions; `decrementAffiliateSession` called after 30s timer
+  - `switchToApp` uses `affiliateUrl` when `remaining > 0`, else `cleanUrl`
+  - **Bug fixed**: `managed.url` was not updated on existing entries — sleeping views would reload with stale affiliate URL after sessions exhausted
+
+- [x] **Flow 7 — Edge cases**
+  - 20+ pinned apps: sidebar uses `overflow-y-auto` with hidden scrollbar (`scrollbarWidth: none`)
+  - Malformed URL: rejected at form validation (renderer) and at IPC handler (main process double-check)
+  - Popup windows: `setWindowOpenHandler` returns `{ action: 'deny' }` + `shell.openExternal` + toast
+
+- [x] **Flow 8 — Store detection**
+  - `process.windowsStore` check in `updater.ts`; `autoUpdater` init is skipped for Store installs
+  - `IPC_UPDATER_RESTART` handler always registered so toast action button works on both install types
+
+### Bugs fixed
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| 1 | `electron/ipc/view-manager.ts` | `managed.url` never updated on existing entries — sleeping view after affiliate→clean rotation reloaded with stale affiliate URL | Added `managed.url = url` in the `else` branch of `switchToApp` |
+| 2 | `electron/ipc/view-manager.ts` | Crashed `WebContentsView` not closed — listener closure held reference to `view`, preventing GC (memory leak per crash) | Added `view.webContents.close()` in `render-process-gone` handler after removing from contentView |
+| 3 | `src/context/AppContext.tsx` | `loadApps` pushed custom apps twice — once from `app:get-catalog` (which already merges custom apps) and again from `app:get-custom`, duplicating them in `allApps` | Build `customIds` Set from custom result; use it only to set `isCustom` on catalog entries, no second push |
+| 4 | `electron/services/catalog-sync.ts` | `console.log` fallback messages | Removed |
+| 5 | `electron/services/updater.ts` | `console.log` Store detection message | Removed |
+| 6 | `electron/ipc/view-manager.ts` | `console.log` in `render-process-gone` handler | Removed |
+
+### Final state
+- `tsc --noEmit` — 0 errors
+- All 66 Vitest unit tests pass
+- No `console.log` statements in main process code
+- All `console.error` / `console.warn` retained for error paths
+
