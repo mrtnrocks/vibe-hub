@@ -104,4 +104,23 @@
 - URL validation runs on blur and on every keystroke after first blur attempt; `https://` is prepended before validation and before saving if protocol is missing
 - Directory renders as a custom overlay (not a shadcn Dialog) so the inner "Add Custom App" Dialog portal stacks above it cleanly at z-50
 
-## Phase 7–10: (see spec Section 8) ⬜
+## Phase 7: Prompt Library ✅
+
+- [x] Create `src/lib/variables.ts` — `parseVariables(template)` extracts unique `{{var}}` names in order; `interpolate(template, values)` replaces placeholders, leaving unmatched ones intact
+- [x] Write `tests/unit/variables.test.ts` — 23 tests covering: empty strings, single/multiple variables, deduplication, whitespace trimming, adjacent placeholders, `$`-in-values, multiline templates, missing values, no-placeholder passthrough
+- [x] Create `src/hooks/usePrompts.ts` — CRUD hook with local cache; `search` + `selectedTag` filters drive `ipc.promptList`; optimistic cache updates on create/update/delete
+- [x] Create `src/components/prompts/VariableFiller.tsx` — dynamic form (one Input per `{{variable}}`), pre-filled from `prompt.defaults`, live interpolation preview, "Copy" writes result to clipboard with 2s "Copied!" feedback
+- [x] Create `src/components/prompts/PromptForm.tsx` — create/edit form with title, monospace template textarea, auto-detected variable defaults section (synced via `useEffect` on template change), live preview with defaults applied, tags input
+- [x] Create `src/components/prompts/PromptDrawer.tsx` — Framer Motion spring slide-out from right edge; search bar + tag filter chips; prompt list → click to open VariableFiller; inline create flow; "Manage" button hands off to PromptManager
+- [x] Create `src/components/prompts/PromptManager.tsx` — full-page modal, two-panel layout: 72-unit left list with search/tag filter + hover edit/delete actions; right panel renders PromptForm or VariableFiller based on selection
+- [x] Update `src/App.tsx` — replace Phase 5 placeholder with `<PromptDrawer>` (opened by sidebar BookOpen button) + `<PromptManager>` (opened via "Manage" from drawer)
+- [x] Verify: All 23 new tests pass (66 total); `tsc --noEmit` 0 errors
+
+### Key decisions / notes
+- `parseVariables` uses `[^{}]+` in the regex — cannot match `{` or `}`, so strictly `{{name}}` only; `{{{x}}}` resolves to `x` because `{{x}}` matches at offset 1 (documented in test)
+- `interpolate` uses `String.prototype.replace` with a function callback (not a replacement string) so `$` characters in values are passed through literally
+- `usePrompts` does server-side filtering via `ipc.promptList` for tag/search — list rerenders when either filter changes via `useCallback` dependency
+- `PromptDrawer` and `PromptManager` each instantiate their own `usePrompts` — no shared state needed since both are not open simultaneously
+- `PromptForm` `useEffect` on `template` keeps `defaults` keys in sync: new vars get empty default, removed vars are dropped, existing values are preserved
+
+## Phase 8–10: (see spec Section 8) ⬜

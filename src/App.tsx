@@ -4,11 +4,14 @@ import { Sidebar } from './components/sidebar/Sidebar'
 import { CrashPlaceholder } from './components/shared/CrashPlaceholder'
 import { ToastContainer } from './components/shared/Toast'
 import { Directory } from './components/directory/Directory'
+import { PromptDrawer } from './components/prompts/PromptDrawer'
+import { PromptManager } from './components/prompts/PromptManager'
 
 function MainContent(): React.JSX.Element {
   const { activeAppId, viewStates, pinnedApps } = useApp()
   const [directoryOpen, setDirectoryOpen] = useState(false)
-  const [promptLibraryOpen, setPromptLibraryOpen] = useState(false)
+  const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
+  const [promptManagerOpen, setPromptManagerOpen] = useState(false)
 
   const activeViewState = activeAppId ? viewStates.get(activeAppId) : undefined
   const isCrashed = activeViewState === 'crashed'
@@ -17,7 +20,7 @@ function MainContent(): React.JSX.Element {
     <div className="flex h-screen w-screen bg-background text-foreground overflow-hidden">
       <Sidebar
         onOpenDirectory={() => setDirectoryOpen(true)}
-        onOpenPromptLibrary={() => setPromptLibraryOpen(true)}
+        onOpenPromptLibrary={() => setPromptDrawerOpen(true)}
       />
 
       {/* Content area — WebContentsView is injected here by the main process */}
@@ -44,25 +47,17 @@ function MainContent(): React.JSX.Element {
 
       <Directory open={directoryOpen} onClose={() => setDirectoryOpen(false)} />
 
-      {promptLibraryOpen && (
-        <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setPromptLibraryOpen(false)}
-        >
-          <div
-            className="rounded-xl border border-border bg-card p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-semibold">Prompt Library</p>
-            <p className="mt-1 text-sm text-muted-foreground">Coming in Phase 7</p>
-            <button
-              className="mt-4 text-sm text-primary hover:underline"
-              onClick={() => setPromptLibraryOpen(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
+      <PromptDrawer
+        open={promptDrawerOpen}
+        onClose={() => setPromptDrawerOpen(false)}
+        onOpenManager={() => {
+          setPromptDrawerOpen(false)
+          setPromptManagerOpen(true)
+        }}
+      />
+
+      {promptManagerOpen && (
+        <PromptManager onClose={() => setPromptManagerOpen(false)} />
       )}
     </div>
   )
