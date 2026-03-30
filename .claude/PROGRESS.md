@@ -173,4 +173,61 @@
 - `applyTheme` is a plain function (not a hook) so it can be called at module init time from outside React
 - Onboarding default state is `true` (complete) to avoid flash; it's set to `false` only after the pref is loaded from the main process — new installs default to `false` in `AppPreferences`
 
-## Phase 9–10: (see spec) ⬜
+## Phase 9: Packaging & Store Submission ✅
+
+- [x] Create `resources/appx/` with placeholder transparent-background Store assets:
+  - `StoreLogo.png` (50×50)
+  - `Square44x44Logo.png` (44×44)
+  - `Square150x150Logo.png` (150×150)
+  - `Wide310x150Logo.png` (310×150)
+  - Generated via `scripts/generate-store-assets.mjs` (pure Node.js, no external deps)
+- [x] Create `electron-builder.yml`:
+  - `appId: com.vibehub.app`, `productName: Vibe Hub`
+  - `win.target`: both `appx` (x64) and `nsis` (x64)
+  - `appx` block with placeholder Partner Center values (`identityName`, `publisher`, `publisherDisplayName`, `applicationId`, `displayName`, `backgroundColor`)
+  - `nsis` block: non-one-click, per-user install, desktop + Start Menu shortcuts
+  - `publish` block: GitHub Releases provider (`mrtnrocks/vibe-hub`) for sideloaded NSIS auto-update
+- [x] Install `electron-builder` v26.8.1 (devDependency)
+- [x] Add build scripts to `package.json`: `pack:appx`, `pack:nsis`, `pack:all`
+- [x] Verify: `electron-builder --version` returns 26.8.1; dry-run exits 0
+
+### Key decisions / notes
+- Placeholder PNGs are pure transparent pixels — replace with real branded assets before Store submission
+- `win.icon` is commented out until `resources/icon.ico` exists (electron-builder will error if the path is set but the file is absent); add 256×256 multi-res ICO and uncomment before building
+- `identityName`, `publisher`, `publisherDisplayName` are all `PLACEHOLDER` — fill in from Microsoft Partner Center → App management → App identity before running `pack:appx`
+- Store installs are detected via `process.windowsStore === true`; `electron-updater` is already guarded in Phase 8's `updater.ts` — no changes needed here
+- To publish a signed NSIS release: `GH_TOKEN=<token> npx electron-builder --win nsis --publish always`  
+  
+### Before building  
+  resources/appx/ — 4 placeholder transparent PNGs:               
+  - StoreLogo.png (50×50)                                         
+  - Square44x44Logo.png (44×44)                                   
+  - Square150x150Logo.png (150×150)                               
+  - Wide310x150Logo.png (310×150)                                 
+                                                                  
+  electron-builder.yml — fully configured with:
+  - appx target (x64) with placeholder Partner Center identity
+  values
+  - nsis target (x64) with standard one-click-off installer
+  options
+  - GitHub Releases publish config for NSIS auto-update
+  - buildResources: resources so appx assets are picked up
+  automatically
+
+  package.json — 3 new scripts added:
+  - pack:appx — builds then packages appx only
+  - pack:nsis — builds then packages NSIS only
+  - pack:all — builds then packages both
+
+  electron-builder v26.8.1 installed as a devDependency.
+
+  Before running a real build, you need to:
+  1. Put your real resources/icon.ico and uncomment the icon: line
+   in the yml
+  2. Replace the 3 PLACEHOLDER values in electron-builder.yml with
+   your actual Partner Center identity values
+  3. Replace the transparent PNGs in resources/appx/ with branded
+  assets before Store submission  
+
+
+## Phase 10: Integration Testing & Bug Fixing ⬜

@@ -1,0 +1,64 @@
+appId: com.vibehub.app
+productName: Vibe Hub
+copyright: Copyright © 2025 Vibe Hub
+
+# electron-vite outputs to out/
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - out/**/*
+  - resources/**/*
+  - package.json
+
+# ── Windows ────────────────────────────────────────────────────────────────────
+win:
+  # Place a 256×256 (or multi-res) icon at resources/icon.ico before building.
+  # electron-builder will use it for both NSIS and appx automatically.
+  # icon: resources/icon.ico   ← uncomment once the icon file exists
+  target:
+    - target: appx
+      arch: x64
+    - target: nsis
+      arch: x64
+
+# ── Microsoft Store (APPX / MSIX) ──────────────────────────────────────────────
+# Fill in identityName, publisher, and publisherDisplayName from
+# Microsoft Partner Center → App management → App identity.
+# Leave as placeholders until you have the real Partner Center values.
+appx:
+  identityName: PLACEHOLDER.VibeHub          # e.g. "MyCompany.VibeHub"
+  publisher: CN=PLACEHOLDER                   # e.g. "CN=MyCompany, O=MyCompany, L=City, S=State, C=US"
+  publisherDisplayName: PLACEHOLDER           # e.g. "My Company"
+  applicationId: VibeHub
+  displayName: Vibe Hub
+  backgroundColor: "#1a1a2e"
+  showNameOnTiles: false
+
+  # Store assets — replace the transparent placeholders with real branded images
+  # before submitting to Partner Center.
+  # electron-builder picks these up from resources/appx/ automatically when
+  # the file names match the appx asset naming convention.
+
+# ── NSIS (sideloaded installer) ────────────────────────────────────────────────
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Vibe Hub
+
+# ── Auto-update (sideloaded NSIS only) ────────────────────────────────────────
+# Store installs never use electron-updater (process.windowsStore === true).
+# Sideloaded installs update via GitHub Releases.
+#
+# To publish a release:
+#   GH_TOKEN=<your-token> npx electron-builder --win nsis --publish always
+#
+publish:
+  provider: github
+  owner: mrtnrocks
+  repo: vibe-hub
+  releaseType: release
