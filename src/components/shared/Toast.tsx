@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { ipc } from '../lib/ipc'
-import { useApp } from '../context/AppContext'
+import { ipc } from '../../lib/ipc'
+import { useApp } from '../../context/AppContext'
 
 export function ToastContainer(): React.JSX.Element {
   const { toastQueue, dismissToast } = useApp()
@@ -23,7 +23,7 @@ export function ToastContainer(): React.JSX.Element {
               <button
                 className="shrink-0 text-xs font-medium text-primary hover:underline"
                 onClick={() => {
-                  ipc.appSwitch(toast.action!.ipcChannel)
+                  ipc.invokeAction(toast.action!.ipcChannel)
                   dismissToast(toast.id)
                 }}
               >

@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
 import { Moon, AlertTriangle } from 'lucide-react'
-import { cn } from '../lib/utils'
-import type { ViewState } from '../../shared/types'
-import type { AppEntry } from '../context/AppContext'
+import { cn } from '../../lib/utils'
+import type { ViewState } from '../../../shared/types'
+import type { AppEntry } from '../../context/AppContext'
 
 interface AppIconProps {
   app: AppEntry

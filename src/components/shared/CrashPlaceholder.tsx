@@ -1,5 +1,5 @@
 import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../../context/AppContext'
 
 export function CrashPlaceholder({ appId }: { appId: string }): React.JSX.Element {
   const { reloadApp } = useApp()

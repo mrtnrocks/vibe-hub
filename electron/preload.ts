@@ -104,7 +104,11 @@ const electronAPI = {
     }
     ipcRenderer.on(IPC_VIEW_TOAST, handler)
     return () => ipcRenderer.removeListener(IPC_VIEW_TOAST, handler)
-  }
+  },
+
+  // Generic action invoke for toast action buttons (e.g., updater restart)
+  invokeAction: (channel: string): Promise<void> =>
+    ipcRenderer.invoke(channel)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)

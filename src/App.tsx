@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { AppProvider, useApp } from './context/AppContext'
-import { Sidebar } from './components/Sidebar'
-import { CrashPlaceholder } from './components/CrashPlaceholder'
-import { ToastContainer } from './components/Toast'
+import { Sidebar } from './components/sidebar/Sidebar'
+import { CrashPlaceholder } from './components/shared/CrashPlaceholder'
+import { ToastContainer } from './components/shared/Toast'
+import { Directory } from './components/directory/Directory'
 
 function MainContent(): React.JSX.Element {
   const { activeAppId, viewStates, pinnedApps } = useApp()
@@ -41,27 +42,7 @@ function MainContent(): React.JSX.Element {
 
       <ToastContainer />
 
-      {/* Placeholder dialogs — implemented in later phases */}
-      {directoryOpen && (
-        <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setDirectoryOpen(false)}
-        >
-          <div
-            className="rounded-xl border border-border bg-card p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-semibold">App Directory</p>
-            <p className="mt-1 text-sm text-muted-foreground">Coming in Phase 6</p>
-            <button
-              className="mt-4 text-sm text-primary hover:underline"
-              onClick={() => setDirectoryOpen(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <Directory open={directoryOpen} onClose={() => setDirectoryOpen(false)} />
 
       {promptLibraryOpen && (
         <div

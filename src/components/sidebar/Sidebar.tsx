@@ -1,8 +1,8 @@
 import { Plus, BookOpen } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../../context/AppContext'
 import { AppIcon } from './AppIcon'
 import { SortableList } from './SortableList'
-import { useWebview } from '../hooks/useWebview'
+import { useWebview } from '../../hooks/useWebview'
 
 interface SidebarProps {
   onOpenDirectory: () => void
