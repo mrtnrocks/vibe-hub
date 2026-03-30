@@ -66,4 +66,23 @@
 - Affiliate timers stored in a module-level `Map<string, NodeJS.Timeout>` in `apps.ts`; existing timer is cleared and restarted on each `app:switch` call to the same appId
 - `prompt:delete` returns `void` (no `IpcResult`) per spec — errors are logged silently, not surfaced to the renderer
 
-## Phase 5–10: (see spec Section 8) ⬜
+## Phase 5: Sidebar & App Switching UI ✅
+
+- [x] Install `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `framer-motion`
+- [x] Create `src/context/AppContext.tsx` — `AppProvider` with state: `activeAppId`, `sidebarOrder`, `viewStates: Map<string, ViewState>`, `theme`, `toastQueue`; loads catalog + custom apps on mount; restores `lastActiveAppId` from prefs; persists sidebar order via `prefs:set`; listens for `view:state-changed` and `view:toast` from main process
+- [x] Create `src/hooks/useWebview.ts` — thin hook wrapping `switchApp` from context
+- [x] Create `src/components/AppIcon.tsx` — 40×40 rounded button; emoji icon or letter fallback; state overlays: green dot (active), moon icon (sleeping), red triangle (crashed), nothing (background); Framer Motion `whileTap` scale
+- [x] Create `src/components/SortableList.tsx` — `@dnd-kit/sortable` vertical list, `PointerSensor` with 5px activation distance, `arrayMove` on drag end, calls `onReorder` callback
+- [x] Create `src/components/Sidebar.tsx` — 64px fixed rail; VH logo mark; scrollable sortable icon list (hidden scrollbar via `scrollbar-width: none`); Prompt Library (BookOpen) and Add App (Plus) icon buttons at bottom
+- [x] Create `src/components/Toast.tsx` — `ToastContainer` with Framer Motion `AnimatePresence`; 4s auto-dismiss via `setTimeout` in context; optional action button; manual X dismiss
+- [x] Create `src/components/CrashPlaceholder.tsx` — centered crash card with AlertTriangle icon and Reload button that calls `reloadApp(appId)`
+- [x] Rewrite `src/App.tsx` — `AppProvider` wrapping `MainContent`; Sidebar fixed left (64px); content area fills remaining space; shows `CrashPlaceholder` when active app is crashed; shows empty state with "Browse Apps" CTA when no pinned apps; placeholder dialogs for App Directory (Phase 6) and Prompt Library (Phase 7)
+- [x] Verify: `tsc --noEmit` passes with 0 errors
+
+### Key decisions / notes
+- `AppContext` loads both catalog and custom apps into a unified `AppEntry[]` shape to avoid duplicating fetch logic in components
+- `SortableList` renders children via render-prop `(id) => ReactNode` pattern so the parent (`Sidebar`) controls what each sortable item looks like
+- `reloadApp` clears the viewState entry for the appId before calling `app:switch` so the crashed placeholder disappears immediately on click
+- Placeholder dialogs for Directory and Prompt Library added in `App.tsx` to keep Phase 5 self-contained without blocking the sidebar from being testable end-to-end
+
+## Phase 6–10: (see spec Section 8) ⬜

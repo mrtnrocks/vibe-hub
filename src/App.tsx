@@ -1,26 +1,97 @@
-function App(): React.JSX.Element {
-  return (
-    <div className="flex h-screen w-screen bg-background text-foreground">
-      {/* Sidebar placeholder */}
-      <aside className="flex w-16 flex-col items-center gap-2 border-r border-border bg-card/50 py-4 backdrop-blur-xl">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground text-sm font-bold">
-          VH
-        </div>
-      </aside>
+import React, { useState } from 'react'
+import { AppProvider, useApp } from './context/AppContext'
+import { Sidebar } from './components/Sidebar'
+import { CrashPlaceholder } from './components/CrashPlaceholder'
+import { ToastContainer } from './components/Toast'
 
-      {/* Main content area */}
-      <main className="flex flex-1 items-center justify-center">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">Vibe Hub</h1>
-          <p className="text-muted-foreground text-lg">
-            Your AI builder command center
-          </p>
-          <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm text-muted-foreground backdrop-blur-sm">
-            Phase 1 — Skeleton &amp; Tooling
+function MainContent(): React.JSX.Element {
+  const { activeAppId, viewStates, pinnedApps } = useApp()
+  const [directoryOpen, setDirectoryOpen] = useState(false)
+  const [promptLibraryOpen, setPromptLibraryOpen] = useState(false)
+
+  const activeViewState = activeAppId ? viewStates.get(activeAppId) : undefined
+  const isCrashed = activeViewState === 'crashed'
+
+  return (
+    <div className="flex h-screen w-screen bg-background text-foreground overflow-hidden">
+      <Sidebar
+        onOpenDirectory={() => setDirectoryOpen(true)}
+        onOpenPromptLibrary={() => setPromptLibraryOpen(true)}
+      />
+
+      {/* Content area — WebContentsView is injected here by the main process */}
+      <main className="relative flex flex-1 overflow-hidden">
+        {isCrashed && activeAppId ? (
+          <CrashPlaceholder appId={activeAppId} />
+        ) : !activeAppId || pinnedApps.length === 0 ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center">
+            <p className="text-2xl font-semibold tracking-tight">Vibe Hub</p>
+            <p className="text-sm text-muted-foreground">
+              Pin an app from the directory to get started
+            </p>
+            <button
+              onClick={() => setDirectoryOpen(true)}
+              className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Browse Apps
+            </button>
+          </div>
+        ) : null}
+      </main>
+
+      <ToastContainer />
+
+      {/* Placeholder dialogs — implemented in later phases */}
+      {directoryOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setDirectoryOpen(false)}
+        >
+          <div
+            className="rounded-xl border border-border bg-card p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-semibold">App Directory</p>
+            <p className="mt-1 text-sm text-muted-foreground">Coming in Phase 6</p>
+            <button
+              className="mt-4 text-sm text-primary hover:underline"
+              onClick={() => setDirectoryOpen(false)}
+            >
+              Close
+            </button>
           </div>
         </div>
-      </main>
+      )}
+
+      {promptLibraryOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setPromptLibraryOpen(false)}
+        >
+          <div
+            className="rounded-xl border border-border bg-card p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-semibold">Prompt Library</p>
+            <p className="mt-1 text-sm text-muted-foreground">Coming in Phase 7</p>
+            <button
+              className="mt-4 text-sm text-primary hover:underline"
+              onClick={() => setPromptLibraryOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function App(): React.JSX.Element {
+  return (
+    <AppProvider>
+      <MainContent />
+    </AppProvider>
   )
 }
 
