@@ -2,6 +2,7 @@ import { WebContentsView, shell, BrowserWindow } from 'electron'
 import type { IpcMainInvokeEvent } from 'electron'
 import type { ToastPayload } from '../../shared/types'
 import { IPC_VIEW_STATE_CHANGED, IPC_VIEW_TOAST } from '../../shared/constants'
+import { attachLocalShortcuts } from '../services/shortcuts'
 
 export interface ManagedView {
   view: WebContentsView | null // null = sleeping
@@ -129,6 +130,7 @@ export function switchToApp(
     })
     managed.view = view
     attachViewListeners(appId, view, win)
+    attachLocalShortcuts(view.webContents, win)
     view.webContents.loadURL(managed.url)
   }
 

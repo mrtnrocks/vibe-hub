@@ -6,21 +6,28 @@ import { ToastContainer } from './components/shared/Toast'
 import { Directory } from './components/directory/Directory'
 import { PromptDrawer } from './components/prompts/PromptDrawer'
 import { PromptManager } from './components/prompts/PromptManager'
+import { Onboarding } from './components/Onboarding'
+import { Settings } from './components/Settings'
 
 function MainContent(): React.JSX.Element {
-  const { activeAppId, viewStates, pinnedApps } = useApp()
+  const { activeAppId, viewStates, pinnedApps, onboardingComplete } = useApp()
   const [directoryOpen, setDirectoryOpen] = useState(false)
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
   const [promptManagerOpen, setPromptManagerOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const activeViewState = activeAppId ? viewStates.get(activeAppId) : undefined
   const isCrashed = activeViewState === 'crashed'
 
   return (
     <div className="flex h-screen w-screen bg-background text-foreground overflow-hidden">
+      {/* Onboarding overlay — shown on first launch */}
+      {!onboardingComplete && <Onboarding />}
+
       <Sidebar
         onOpenDirectory={() => setDirectoryOpen(true)}
         onOpenPromptLibrary={() => setPromptDrawerOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       {/* Content area — WebContentsView is injected here by the main process */}
@@ -46,6 +53,8 @@ function MainContent(): React.JSX.Element {
       <ToastContainer />
 
       <Directory open={directoryOpen} onClose={() => setDirectoryOpen(false)} />
+
+      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <PromptDrawer
         open={promptDrawerOpen}

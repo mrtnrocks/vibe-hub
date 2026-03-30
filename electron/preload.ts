@@ -18,6 +18,7 @@ import {
   IPC_PREFS_GET,
   IPC_PREFS_SET,
   IPC_SHORTCUTS_SET_GLOBAL,
+  IPC_SHORTCUTS_NAVIGATE,
   IPC_UPDATER_RESTART,
   IPC_VIEW_STATE_CHANGED,
   IPC_VIEW_TOAST
@@ -104,6 +105,20 @@ const electronAPI = {
     }
     ipcRenderer.on(IPC_VIEW_TOAST, handler)
     return () => ipcRenderer.removeListener(IPC_VIEW_TOAST, handler)
+  },
+
+  // Shortcut navigation (Main → Renderer)
+  onShortcutNavigate: (
+    callback: (data: { type: 'position' | 'prev' | 'next'; index?: number }) => void
+  ): (() => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      data: { type: 'position' | 'prev' | 'next'; index?: number }
+    ): void => {
+      callback(data)
+    }
+    ipcRenderer.on(IPC_SHORTCUTS_NAVIGATE, handler)
+    return () => ipcRenderer.removeListener(IPC_SHORTCUTS_NAVIGATE, handler)
   },
 
   // Generic action invoke for toast action buttons (e.g., updater restart)

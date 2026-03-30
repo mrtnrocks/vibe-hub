@@ -1,4 +1,4 @@
-import { Plus, BookOpen } from 'lucide-react'
+import { Plus, BookOpen, Settings } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { AppIcon } from './AppIcon'
 import { SortableList } from './SortableList'
@@ -7,9 +7,10 @@ import { useWebview } from '../../hooks/useWebview'
 interface SidebarProps {
   onOpenDirectory: () => void
   onOpenPromptLibrary: () => void
+  onOpenSettings: () => void
 }
 
-export function Sidebar({ onOpenDirectory, onOpenPromptLibrary }: SidebarProps): React.JSX.Element {
+export function Sidebar({ onOpenDirectory, onOpenPromptLibrary, onOpenSettings }: SidebarProps): React.JSX.Element {
   const { pinnedApps, activeAppId, viewStates, sidebarOrder, setSidebarOrder } = useApp()
   const { switchApp } = useWebview()
 
@@ -68,6 +69,14 @@ export function Sidebar({ onOpenDirectory, onOpenPromptLibrary }: SidebarProps):
           aria-label="Open App Directory"
         >
           <Plus className="h-5 w-5" />
+        </button>
+        <button
+          onClick={onOpenSettings}
+          title="Settings"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
+          aria-label="Open Settings"
+        >
+          <Settings className="h-5 w-5" />
         </button>
       </div>
     </aside>

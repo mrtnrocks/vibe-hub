@@ -123,4 +123,54 @@
 - `PromptDrawer` and `PromptManager` each instantiate their own `usePrompts` — no shared state needed since both are not open simultaneously
 - `PromptForm` `useEffect` on `template` keeps `defaults` keys in sync: new vars get empty default, removed vars are dropped, existing values are preserved
 
-## Phase 8–10: (see spec Section 8) ⬜
+## Phase 8: Polish Layer ✅
+
+- [x] Install `electron-updater`
+- [x] Add `IPC_SHORTCUTS_NAVIGATE = 'shortcuts:navigate'` to `shared/constants.ts` (Main → Renderer)
+- [x] Create `electron/services/shortcuts.ts`
+  - `attachLocalShortcuts(webContents, win)` — `before-input-event` interceptor for Ctrl+1-9 (switch to sidebar position by 0-based index) and Ctrl+[ / ] (cycle prev/next); sends `shortcuts:navigate` to renderer
+  - `registerShortcutsIpc(win)` — `shortcuts:set-global` IPC handler; unregisters previous hotkey, registers new one via `globalShortcut`, saves to prefs; returns `{ success: false }` (not an error) if accelerator is already claimed by another app
+  - `restoreGlobalHotkey(win)` — re-registers saved hotkey from prefs on startup
+  - `unregisterAllGlobalShortcuts()` — called on `before-quit`
+- [x] Create `electron/services/tray.ts`
+  - `initTray(win)` — creates `Tray` with optional icon (`resources/tray.png`, gracefully falls back to `nativeImage.createEmpty()`), tooltip "Vibe Hub", right-click context menu (Show / Quit), single-click to show/focus
+  - Window `close` event is overridden to `win.hide()` unless `isQuitting` flag is set
+  - `app.before-quit` sets `isQuitting = true` so the final quit flows through
+  - `destroyTray()` — called on `before-quit`
+- [x] Create `electron/services/updater.ts`
+  - Guards on `process.windowsStore` — skips `autoUpdater` initialization for Store installs; `IPC_UPDATER_RESTART` handler is always registered so the toast action button works regardless
+  - On `update-downloaded` → sends toast with message and **Restart** action button (`IPC_UPDATER_RESTART` channel)
+  - `autoUpdater.checkForUpdatesAndNotify()` errors caught silently
+- [x] Update `electron/ipc/view-manager.ts` — call `attachLocalShortcuts(view.webContents, win)` when creating each `WebContentsView`, so Ctrl+1-9 works even when an embedded browser has keyboard focus
+- [x] Update `electron/main.ts` — import and wire tray, shortcuts (renderer webContents + IPC handler + hotkey restore), and updater
+- [x] Update `electron/preload.ts` — add `onShortcutNavigate` listener exposing `shortcuts:navigate` events to the renderer
+- [x] Update `src/context/AppContext.tsx`
+  - `applyTheme(theme)` — adds/removes `.dark` class on `document.documentElement`; system mode uses `window.matchMedia('(prefers-color-scheme: dark)')` with a live `change` listener
+  - `setTheme` now calls `applyTheme` immediately on change
+  - Theme applied on mount after loading saved pref
+  - Exposes `onboardingComplete` / `setOnboardingComplete` (reads/writes `onboardingComplete` pref)
+  - Listens to `shortcuts:navigate` events: resolves target appId from `sidebarOrder` + `activeAppId`, then calls `ipc.appSwitch` asynchronously
+- [x] Create `src/components/Onboarding.tsx`
+  - Full-screen `z-50` overlay with Framer Motion fade-in; shown when `onboardingComplete === false`
+  - VH logo mark, headline, subhead
+  - `HotkeyRecorder` — focusable div that captures `onKeyDown`, builds Ctrl/Alt/Shift+Key string, requires at least 2 parts (modifier + key)
+  - **Get Started** button — calls `ipc.shortcutsSetGlobal(hotkey)` if a hotkey was entered, then `setOnboardingComplete(true)`
+- [x] Create `src/components/Settings.tsx`
+  - Radix UI Dialog modal
+  - **Theme** — three-button toggle (System / Light / Dark), calls `setTheme` from context
+  - **Sleep timer** — `<select>` with options: 1 min / 5 min / 15 min / 30 min / Never (`Number.MAX_SAFE_INTEGER`); persists via `prefs:set`
+  - **Global shortcut** — reuses `HotkeyRecorder`; calls `ipc.shortcutsSetGlobal` on change, shows "Saved" / "Already in use" inline feedback; Clear button unregisters and clears pref
+  - Loads current pref values when dialog opens
+- [x] Update `src/components/sidebar/Sidebar.tsx` — add Settings (gear) icon button at bottom, wired via new `onOpenSettings` prop
+- [x] Update `src/App.tsx` — mount `<Onboarding>` overlay and `<Settings>` dialog; pass `onOpenSettings` to Sidebar
+- [x] Verify: `tsc --noEmit` 0 errors; `electron-vite build` succeeds (main 26 kB, preload 3.4 kB, renderer 1.2 MB)
+
+### Key decisions / notes
+- Global hotkey registration failure returns `{ ok: true, data: { success: false } }` — not an error — so the renderer can show "already in use" feedback without treating it as a crash
+- Tray icon is loaded from `resources/tray.png` at runtime; if absent, `nativeImage.createEmpty()` is used as a no-crash fallback (tray will appear blank on Windows — replace with a real 16×16 PNG before shipping)
+- `IPC_UPDATER_RESTART` handler is registered unconditionally; only the `autoUpdater` listener is skipped for Store installs — this way the existing Toast action button infrastructure keeps working
+- `attachLocalShortcuts` is called on both the renderer webContents (for when no WebContentsView is active) and on each new `WebContentsView` (for when an embedded browser has focus)
+- `applyTheme` is a plain function (not a hook) so it can be called at module init time from outside React
+- Onboarding default state is `true` (complete) to avoid flash; it's set to `false` only after the pref is loaded from the main process — new installs default to `false` in `AppPreferences`
+
+## Phase 9–10: (see spec) ⬜

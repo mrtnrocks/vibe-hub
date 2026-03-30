@@ -29,6 +29,10 @@ interface AppContextValue {
   theme: 'system' | 'light' | 'dark'
   setTheme: (theme: 'system' | 'light' | 'dark') => void
 
+  // Onboarding
+  onboardingComplete: boolean
+  setOnboardingComplete: (complete: boolean) => void
+
   // Toast queue
   toastQueue: ToastItem[]
   addToast: (payload: ToastPayload) => void
@@ -42,12 +46,30 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null)
 
+function applyTheme(theme: 'system' | 'light' | 'dark'): void {
+  const root = document.documentElement
+  if (theme === 'dark') {
+    root.classList.add('dark')
+  } else if (theme === 'light') {
+    root.classList.remove('dark')
+  } else {
+    // system: follow OS preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (prefersDark) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [allApps, setAllApps] = useState<AppEntry[]>([])
   const [activeAppId, setActiveAppId] = useState<string | null>(null)
   const [viewStates, setViewStates] = useState<Map<string, ViewState>>(new Map())
   const [sidebarOrder, setSidebarOrderState] = useState<string[]>([])
   const [theme, setThemeState] = useState<'system' | 'light' | 'dark'>('system')
+  const [onboardingComplete, setOnboardingCompleteState] = useState<boolean>(true)
   const [toastQueue, setToastQueue] = useState<ToastItem[]>([])
   const toastCounter = useRef(0)
 
@@ -98,7 +120,13 @@ export function AppProvider({ children }: { children: React.ReactNode }): React.
 
   const setTheme = useCallback((t: 'system' | 'light' | 'dark') => {
     setThemeState(t)
+    applyTheme(t)
     ipc.prefsSet('theme', t)
+  }, [])
+
+  const setOnboardingComplete = useCallback((complete: boolean) => {
+    setOnboardingCompleteState(complete)
+    ipc.prefsSet('onboardingComplete', complete)
   }, [])
 
   const addToast = useCallback((payload: ToastPayload) => {
@@ -149,17 +177,74 @@ export function AppProvider({ children }: { children: React.ReactNode }): React.
     return unsub
   }, [addToast])
 
+  // Listen for keyboard shortcut navigation from main process
+  useEffect(() => {
+    const unsub = ipc.onShortcutNavigate(({ type, index }) => {
+      setSidebarOrderState((order) => {
+        setActiveAppId((currentId) => {
+          if (order.length === 0) return currentId
+
+          let targetId: string | undefined
+
+          if (type === 'position' && index !== undefined) {
+            targetId = order[index]
+          } else if (type === 'prev') {
+            const idx = currentId ? order.indexOf(currentId) : 0
+            targetId = order[idx <= 0 ? order.length - 1 : idx - 1]
+          } else if (type === 'next') {
+            const idx = currentId ? order.indexOf(currentId) : -1
+            targetId = order[idx >= order.length - 1 ? 0 : idx + 1]
+          }
+
+          if (targetId && targetId !== currentId) {
+            // Trigger switch asynchronously to avoid state update conflicts
+            Promise.resolve().then(() => {
+              ipc.prefsSet('lastActiveAppId', targetId!)
+              ipc.appSwitch(targetId!)
+            })
+            return targetId
+          }
+          return currentId
+        })
+        return order
+      })
+    })
+    return unsub
+  }, [])
+
+  // Listen for system dark mode changes when theme is 'system'
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (): void => {
+      if (theme === 'system') applyTheme('system')
+    }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [theme])
+
   // Load prefs on mount
   useEffect(() => {
     const init = async (): Promise<void> => {
       await loadApps()
 
-      const themeResult = await ipc.prefsGet('theme')
+      const [themeResult, lastActiveResult, onboardingResult] = await Promise.all([
+        ipc.prefsGet('theme'),
+        ipc.prefsGet('lastActiveAppId'),
+        ipc.prefsGet('onboardingComplete')
+      ])
+
       if (themeResult.ok && themeResult.data) {
-        setThemeState(themeResult.data as 'system' | 'light' | 'dark')
+        const t = themeResult.data as 'system' | 'light' | 'dark'
+        setThemeState(t)
+        applyTheme(t)
+      } else {
+        applyTheme('system')
       }
 
-      const lastActiveResult = await ipc.prefsGet('lastActiveAppId')
+      if (onboardingResult.ok) {
+        setOnboardingCompleteState(onboardingResult.data as boolean)
+      }
+
       if (lastActiveResult.ok && lastActiveResult.data) {
         const lastId = lastActiveResult.data as string
         setActiveAppId(lastId)
@@ -187,6 +272,8 @@ export function AppProvider({ children }: { children: React.ReactNode }): React.
     setSidebarOrder,
     theme,
     setTheme,
+    onboardingComplete,
+    setOnboardingComplete,
     toastQueue,
     addToast,
     dismissToast,

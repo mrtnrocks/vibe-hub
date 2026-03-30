@@ -4,6 +4,14 @@ import { is } from '@electron-toolkit/utils'
 import { initDb } from './db/connection'
 import { syncCatalog } from './services/catalog-sync'
 import { startSleepManager, stopSleepManager, setSleepThresholdProvider } from './services/sleep-manager'
+import { initTray, destroyTray } from './services/tray'
+import {
+  registerShortcutsIpc,
+  restoreGlobalHotkey,
+  unregisterAllGlobalShortcuts,
+  attachLocalShortcuts
+} from './services/shortcuts'
+import { initUpdater } from './services/updater'
 import { registerPrefsHandlers, getSleepTimerMs } from './ipc/preferences'
 import { registerViewIpcHandlers, destroyAllViews } from './ipc/view-manager'
 import { registerPromptHandlers } from './ipc/prompts'
@@ -66,6 +74,20 @@ app.whenReady().then(async () => {
     registerPromptHandlers(db)
     registerAppHandlers(db, mainWindow, catalog)
     startSleepManager(mainWindow)
+
+    // Register Ctrl+1-9 and Ctrl+[/] on the renderer webContents too
+    // (WebContentsViews register their own interceptors in view-manager)
+    attachLocalShortcuts(mainWindow.webContents, mainWindow)
+
+    // Register IPC handler for shortcuts:set-global and restore saved hotkey
+    registerShortcutsIpc(mainWindow)
+    restoreGlobalHotkey(mainWindow)
+
+    // System tray (hide-to-tray on close)
+    initTray(mainWindow)
+
+    // Auto-updater (skipped for Store installs)
+    initUpdater(mainWindow)
   }
 
   app.on('activate', () => {
@@ -76,7 +98,9 @@ app.whenReady().then(async () => {
 })
 
 app.on('before-quit', () => {
+  unregisterAllGlobalShortcuts()
   stopSleepManager()
+  destroyTray()
   if (mainWindow) {
     destroyAllViews(mainWindow)
   }

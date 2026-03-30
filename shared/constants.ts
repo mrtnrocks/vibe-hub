@@ -23,3 +23,4 @@ export const IPC_UPDATER_RESTART = 'updater:restart' as const
 // Main → Renderer (send)
 export const IPC_VIEW_STATE_CHANGED = 'view:state-changed' as const
 export const IPC_VIEW_TOAST = 'view:toast' as const
+export const IPC_SHORTCUTS_NAVIGATE = 'shortcuts:navigate' as const
