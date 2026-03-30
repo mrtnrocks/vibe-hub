@@ -48,4 +48,22 @@
 - `electron-store` v11 installed; `getSleepTimerMs()` exported so sleep manager reads live preference
 - `view-manager` uses `require('electron').session` inside `switchToApp` to avoid top-level import issues
 
-## Phase 4–10: (see spec Section 8) ⬜
+## Phase 4: IPC Handlers ✅
+
+- [x] Create `electron/ipc/prompts.ts` — `registerPromptHandlers(db)` with handlers for all 5 prompt channels (`prompt:list`, `prompt:get`, `prompt:create`, `prompt:update`, `prompt:delete`), each wrapped in try/catch returning `IpcResult<T>`
+- [x] Create `electron/ipc/apps.ts` — `registerAppHandlers(db, win, catalogCache)` with handlers for all 7 app channels
+  - `app:get-catalog` — merges catalogCache + custom apps (CustomApp mapped to CatalogApp shape)
+  - `app:get-custom` — DB list only
+  - `app:add-custom` — prepends `https://` if missing, validates with `new URL()`, creates in DB
+  - `app:pin` / `app:unpin` — reads/writes `sidebarOrder` array in electron-store
+  - `app:set-keep-alive` — upserts session then sets flag in DB
+  - `app:switch` — resolves URL from catalog or custom apps, upserts session, picks affiliateUrl (if remaining > 0) or cleanUrl, calls `switchToApp`, starts/restarts 30s timer to decrement affiliate counter
+- [x] Update `electron/main.ts` — capture `db` from `initDb`, await `syncCatalog()`, register prompt + app handlers after `createWindow()`
+- [x] Verify: `tsc --noEmit` passes with 0 errors
+
+### Key decisions / notes
+- `syncCatalog()` is now awaited in `app.whenReady()` before `createWindow()` — always resolves (5s timeout + bundled fallback), so startup delay is bounded
+- Affiliate timers stored in a module-level `Map<string, NodeJS.Timeout>` in `apps.ts`; existing timer is cleared and restarted on each `app:switch` call to the same appId
+- `prompt:delete` returns `void` (no `IpcResult`) per spec — errors are logged silently, not surfaced to the renderer
+
+## Phase 5–10: (see spec Section 8) ⬜

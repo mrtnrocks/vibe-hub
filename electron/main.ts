@@ -6,6 +6,8 @@ import { syncCatalog } from './services/catalog-sync'
 import { startSleepManager, stopSleepManager, setSleepThresholdProvider } from './services/sleep-manager'
 import { registerPrefsHandlers, getSleepTimerMs } from './ipc/preferences'
 import { registerViewIpcHandlers, destroyAllViews } from './ipc/view-manager'
+import { registerPromptHandlers } from './ipc/prompts'
+import { registerAppHandlers } from './ipc/apps'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -53,14 +55,16 @@ app.whenReady().then(async () => {
 
   // Initialize database
   const dbPath = join(app.getPath('userData'), 'vibe-hub.db')
-  initDb(dbPath)
+  const db = initDb(dbPath)
 
-  // Pre-fetch catalog in background (result cached by IPC handler in Phase 4)
-  syncCatalog().catch((err) => console.error('[main] catalog sync error:', err))
+  // Fetch catalog — has 5s timeout with bundled fallback, always resolves
+  const catalog = await syncCatalog()
 
   createWindow()
 
   if (mainWindow) {
+    registerPromptHandlers(db)
+    registerAppHandlers(db, mainWindow, catalog)
     startSleepManager(mainWindow)
   }
 
