@@ -9,6 +9,7 @@ Vibe Hub is a Windows desktop app (Electron 41+) that lets vibe coders manage mu
 **VIBE_HUB_V1_SPEC_v3.md** is the spec. Every architectural decision, data model, IPC channel, and UI component is defined there. If you're unsure about anything, check the spec first. Don't invent new patterns when the spec already has an answer.
 
 ## Tech Stack
+-     Do not override version numbers in the spec. If the spec says Electron 41+, install 41+. Do not substitute an older version based on your training data.
 
 - Electron 41+ with `WebContentsView` (NOT `<webview>` tag)
 - electron-vite (build tool)

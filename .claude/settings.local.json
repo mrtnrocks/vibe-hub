@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Read(//c/tmp/**)",
+      "Bash(rm -rf vibe-hub-scaffold)",
+      "Bash(npm init:*)",
+      "Bash(npx ctx7@latest library \"electron-vite\" \"electron-vite react typescript project setup\")",
+      "Bash(npx:*)",
+      "Bash(MSYS_NO_PATHCONV=1 npx ctx7@latest docs /alex8088/electron-vite-docs \"electron-vite react typescript project structure config setup package.json\" 2>&1)",
+      "Bash(npm install:*)",
+      "Bash(cd:*)",
+      "Bash(npm view:*)"
+    ]
+  }
+}

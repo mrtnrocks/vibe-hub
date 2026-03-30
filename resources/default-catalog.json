@@ -1,0 +1,65 @@
+[
+  {
+    "id": "bolt-new",
+    "name": "Bolt.new",
+    "description": "Full-stack web app builder powered by AI. Prompt, run, edit, and deploy apps directly in your browser.",
+    "cleanUrl": "https://bolt.new",
+    "affiliateUrl": "https://bolt.new?ref=vibehub",
+    "icon": "https://bolt.new/favicon.ico",
+    "tags": ["fullstack", "deploy", "popular"]
+  },
+  {
+    "id": "v0-dev",
+    "name": "v0",
+    "description": "Vercel's AI-powered UI component generator. Generate React components with shadcn/ui from text prompts.",
+    "cleanUrl": "https://v0.dev",
+    "affiliateUrl": "https://v0.dev?ref=vibehub",
+    "icon": "https://v0.dev/favicon.ico",
+    "tags": ["ui", "react", "components"]
+  },
+  {
+    "id": "lovable-dev",
+    "name": "Lovable",
+    "description": "Build production-ready web apps with AI. From idea to deployed app without writing code.",
+    "cleanUrl": "https://lovable.dev",
+    "affiliateUrl": "https://lovable.dev?ref=vibehub",
+    "icon": "https://lovable.dev/favicon.ico",
+    "tags": ["fullstack", "deploy", "popular"]
+  },
+  {
+    "id": "replit-com",
+    "name": "Replit",
+    "description": "Collaborative browser-based IDE with AI assistance. Build, run, and deploy apps in any language.",
+    "cleanUrl": "https://replit.com",
+    "affiliateUrl": "https://replit.com?ref=vibehub",
+    "icon": "https://replit.com/public/icons/favicon-96x96.png",
+    "tags": ["ide", "deploy", "popular"]
+  },
+  {
+    "id": "cursor-sh",
+    "name": "Cursor",
+    "description": "The AI-first code editor. Built on VS Code with deep AI integration for pair-programming.",
+    "cleanUrl": "https://cursor.sh",
+    "affiliateUrl": "https://cursor.sh?ref=vibehub",
+    "icon": "https://cursor.sh/favicon.ico",
+    "tags": ["editor", "ide"]
+  },
+  {
+    "id": "chatgpt-com",
+    "name": "ChatGPT",
+    "description": "OpenAI's conversational AI. Great for brainstorming, debugging, writing, and explaining code.",
+    "cleanUrl": "https://chatgpt.com",
+    "affiliateUrl": "https://chatgpt.com",
+    "icon": "https://chatgpt.com/favicon.ico",
+    "tags": ["chat", "ai", "popular"]
+  },
+  {
+    "id": "claude-ai",
+    "name": "Claude",
+    "description": "Anthropic's AI assistant. Excellent for long-form reasoning, code review, and nuanced analysis.",
+    "cleanUrl": "https://claude.ai",
+    "affiliateUrl": "https://claude.ai",
+    "icon": "https://claude.ai/favicon.ico",
+    "tags": ["chat", "ai", "popular"]
+  }
+]
